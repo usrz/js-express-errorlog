@@ -1,7 +1,7 @@
 {
   "name": "express-errorlog",
   "description": "Error handling and logging for Express (4.x)",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "author": {
     "name": "Pier Fumagalli",
     "email": "pier@usrz.com"
