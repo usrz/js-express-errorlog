@@ -1,7 +1,7 @@
 var request = require('request');
 var express = require('express')();
 var expect = require('chai').expect;
-var errorlog = require('../src/index.js');
+var errorlog = require('../src/express-errorlog.js');
 
 express.get('/test-1', function(req, res, next) { next(400) });
 express.get('/test-2', function(req, res, next) { next(499) });
@@ -22,8 +22,8 @@ express.get('/test-9', function(req, res, next) {
 
 express.get('/test-0', function(req, res, next) {
   var error = Error('exception message for test-0');
-  error.more1 = 'some more details for test 0'
-  error.more2 = 'even more details for test 0'
+  error.more1 = 'some more in test 0'
+  error.more2 = 'even more in test 0'
   next({
     status: 411,
     message: 'message for test-0',
@@ -152,7 +152,7 @@ describe('Express Error Handler', function() {
           message: 'Payment Required',
           details: { testname: 'test-5' }
         });
-        expect(logmessage).to.equal('GET /test-5 (402) - Payment Required\n  >>> { testname: \'test-5\' }');
+        expect(logmessage).to.equal('GET /test-5 (402) - Payment Required\n  >>> {"testname":"test-5"}');
 
         return done();
       } catch (error) {
@@ -173,7 +173,7 @@ describe('Express Error Handler', function() {
           message: 'message for test-6',
           details: { testname: 'test-6' }
         });
-        expect(logmessage).to.equal('GET /test-6 (403) - message for test-6\n  >>> { testname: \'test-6\' }');
+        expect(logmessage).to.equal('GET /test-6 (403) - message for test-6\n  >>> {"testname":"test-6"}');
 
         return done();
       } catch (error) {
@@ -194,7 +194,7 @@ describe('Express Error Handler', function() {
           message: 'message for test-7',
           details: { testname: 'test-7' }
         });
-       expect(logmessage).to.equal('GET /test-7 (500) - message for test-7\n  >>> { testname: \'test-7\' }');
+       expect(logmessage).to.equal('GET /test-7 (500) - message for test-7\n  >>> {"testname":"test-7"}');
 
         return done();
       } catch (error) {
@@ -216,7 +216,6 @@ describe('Express Error Handler', function() {
         });
         expect(logmessage).to.match(new RegExp(
           '^GET /test-8 \\(500\\) - exception message for test-8' + '\n' +
-          '  >>> \\[Error: exception message for test-8\\]'       + '\n' +
           '  Error: exception message for test-8'                 + '\n' +
           '    at '));
 
@@ -240,11 +239,10 @@ describe('Express Error Handler', function() {
           details: { testname: 'test-9' }
         });
         expect(logmessage).to.match(new RegExp(
-          '^GET /test-9 \\(410\\) - exception message for test-9'             + '\n' +
-          '  >>> { \\[Error: exception message for test-9\\]\n  status: 410,' + '\n' +
-          '  details: { testname: \'test-9\' },'                              + '\n' +
-          '  extra: \'this only gets logged!\' }'                             + '\n' +
-          '  Error: exception message for test-9'                             + '\n' +
+          '^GET /test-9 \\(410\\) - exception message for test-9' + '\n' +
+          '  >>> {"testname":"test-9"}'                           + '\n' +
+          '  >>> {"extra":"this only gets logged!"}'              + '\n' +
+          '  Error: exception message for test-9'                 + '\n' +
           '    at '));
 
         return done();
@@ -267,12 +265,10 @@ describe('Express Error Handler', function() {
           details: { testname: 'test-0' }
         });
         expect(logmessage).to.match(new RegExp(
-          '^GET /test-0 \\(411\\) - message for test-0'       + '\n' +
-          '  >>> { testname: \'test-0\' }'                    + '\n' +
-          '  >>> { \\[Error: exception message for test-0\\]' + '\n' +
-          '  more1: \'some more details for test 0\','        + '\n' +
-          '  more2: \'even more details for test 0\' }'       + '\n' +
-          '  Error: exception message for test-0'             + '\n' +
+          '^GET /test-0 \\(411\\) - message for test-0'                         + '\n' +
+          '  >>> {"testname":"test-0"}'                                         + '\n' +
+          '  >>> {"more1":"some more in test 0","more2":"even more in test 0"}' + '\n' +
+          '  Error: exception message for test-0'                               + '\n' +
           '    at '));
 
         return done();

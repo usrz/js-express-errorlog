@@ -4,7 +4,7 @@ module.exports = function(grunt) {
   grunt.initConfig({
     simplemocha: {
       all: {
-        src: ['test/**/*.js']
+        src: ['test/**/*.test.js']
       }
     }
   });

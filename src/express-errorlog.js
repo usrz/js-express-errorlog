@@ -1,47 +1,12 @@
 'use strict';
 
 var statuses = require('statuses');
-var util = require('util');
-
-function log(req, status, message) { //, extra, error) {
-  var loggable = req.id ? req.id + ' - ' : '';
-  loggable += req.method + ' ' + req.originalUrl
-            + ' (' + status + ') - ' + message;
-
-  for (var i = 3; i < arguments.length; i++) {
-    var extra = arguments[i];
-    if (extra) {
-      var more = util.inspect(extra);
-      if (more != '{}') loggable += "\n  >>> " + more;
-      if (extra instanceof Error) {
-        loggable += '\n  ' + extra.stack;
-      }
-    }
-  }
-
-  return loggable;
-}
+var errorlog = require('errorlog');
 
 function create(options) {
   options = options || {};
-
-  // Render or send JSON?
+  var logger = errorlog(options);
   var render = options.render || false;
-
-  // Do we want to log? Function or stream?
-  var logger = options.hasOwnProperty('logger') ? options.logger : process.stderr;
-  if (logger) {
-    if (typeof(logger) === 'function') {
-      // A function, keep as is!
-    } else if (typeof(logger.write) === 'function') {
-      var stream = logger;
-      logger = function(message) {
-        stream.write(new Date().toISOString() + ' - ' + message + '\n');
-      }
-    } else {
-      throw new Error("The 'logger' option must be a function or a stream");
-    }
-  }
 
   // Return our handler...
   return function handler(err, req, res, next) {
@@ -91,24 +56,36 @@ function create(options) {
     // Validate/normalize message
     message = message || statuses[status] || 'Unknown Error';
 
-    // Prepare our response
-    var response = {
-      status: status,
-      message: message,
+    // Build our logger call and response
+    var format = '%s %s (%d) - %s';
+    var args = [ req.method, req.originalUrl, status, message ];
+    var response = { status: status, message: message };
+
+    // Prepend any request id
+    if (req.id) {
+      response.request_id = req.id;
+      format = '%s -' + format;
+      args.unshift(req.id);
     }
 
-    // Inject request ID if available
-    if (req.id) response.request_id = req.id;
-
-    // Inject error details if available
-    if (err.details) response.details = err.details;
-
-    if (logger) {
-      var extra;
-      if (err instanceof Error) extra = err;
-      else if (err.details) extra = err.details;
-      logger(log(req, status, message, extra, err.error));
+    // Append any details
+    if (err.details) {
+      response.details = err.details;
+      args.push(err.details);
     }
+
+    // Errors addition
+    if (err.error) args.push(err.error);
+    if (err instanceof Error) {
+      delete err.details;
+      delete err.status;
+      delete err.error;
+      args.push(err);
+    }
+
+    // Insert our format and log
+    args.unshift(format);
+    logger.apply(null, args);
 
     // Send back our response!
     if (render) {
