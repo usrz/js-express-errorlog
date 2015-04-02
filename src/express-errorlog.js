@@ -64,7 +64,7 @@ function create(options) {
     // Prepend any request id
     if (req.id) {
       response.request_id = req.id;
-      format = '%s -' + format;
+      format = '%s - ' + format;
       args.unshift(req.id);
     }
 
