@@ -5,7 +5,7 @@ A very simple logger for [Express](http://expressjs.com/) 4.x, based on
 the [`errorlog`](https://www.npmjs.com/package/errorlog) NPM module.
 
 * [Install and use](#install-and-use)
-* [Logging and responses](#logging-and-responses)
+* [Logging and sample JSON responses](#logging-and-sample-json-responses)
   * [Numbers](#numbers)
   * [Strings](#strings)
   * [Objects](#objects)
@@ -25,17 +25,32 @@ Install as usual with _NPM_:
 npm install --save express-errorlog
 ```
 
-Then configure as the last route of your Express app:
+Then configure as the last routes of your Express app:
 
 ```javascript
 var errorlog = require('express-errorlog');
 app.use(errorlog);
+
+// The error handler writing the response
+app.use(function(err, req, res, next) {
+  res.json(err);
+})
 ```
 
+The `express-errorlog` handler will normalize whatever your application passed
+to the `next(...)` function and log an error message.
+
+It will then pass the normalized error to the next error handler, which will
+have the job of rendering the actual response to the client.
+
+The examples below assume that the final error handler will simply send back
+a JSON of the normalized error (no need to set the status again,
+`express-errorhandler` will set that for you already).
 
 
-Logging and responses
----------------------
+
+Logging and sample JSON responses
+---------------------------------
 
 In order to trigger log entries, simply use Express' own `next(...)` function,
 passing one of the the following types of parameter:
@@ -224,7 +239,6 @@ Configure accepts basically the same options as
 var errorlog = require('express-errorlog');
 app.use(errorlog({
   logger: function/stream,
-  render: true/false
 }));
 ```
 
@@ -234,8 +248,6 @@ app.use(errorlog({
   * a simple `function` that will be invoked once with each message to log.
   * if unspecified this will default to `process.stderr`.
 * `category`: a category name that will be inserted in the message to log.
-* `render`: A _boolean_, if `true` the response will be sent to the client
-  using Express' own `render(...)` function (extra for `express-errorlog`).
 
 As with [`errorlog`](https://www.npmjs.com/package/errorlog), use a package
 like [`logrotate-stream`](https://www.npmjs.com/package/logrotate-stream) if

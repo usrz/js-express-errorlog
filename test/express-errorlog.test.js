@@ -37,6 +37,10 @@ express.use(errorlog({ logger: function(message) {
   logmessage = message;
 }}));
 
+express.use(function(err, req, res, next) {
+  return res.json(err);
+});
+
 describe('Express Error Handler', function() {
 
   var server = null;

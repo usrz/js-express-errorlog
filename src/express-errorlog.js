@@ -6,7 +6,6 @@ var errorlog = require('errorlog');
 function create(options) {
   options = options || {};
   var logger = errorlog(options);
-  var render = options.render || false;
 
   // Return our handler...
   return function handler(err, req, res, next) {
@@ -88,11 +87,8 @@ function create(options) {
     logger.apply(null, args);
 
     // Send back our response!
-    if (render) {
-      return res.status(status).render(response);
-    } else {
-      return res.status(status).json(response);
-    }
+    res.statusCode = status;
+    return next(response);
   }
 }
 
