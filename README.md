@@ -229,6 +229,21 @@ said `id` will also be reported, for example:
 
 
 
+Wrapped logger
+--------------
+
+The wrapped `errorlog` instance also available as `log(...)`, for example:
+
+```javascript
+var errorlog = require('express-errorlog');
+app.use(errorlog);
+
+// Log something
+errorlog.log.info('This is an info message');
+```
+
+
+
 Configuration
 -------------
 

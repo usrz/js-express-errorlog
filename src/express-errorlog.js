@@ -8,7 +8,7 @@ function create(options) {
   var logger = errorlog(options);
 
   // Return our handler...
-  return function handler(err, req, res, next) {
+  function handler(err, req, res, next) {
     // By default, this is a 500
     var status = 500;
     var message = statuses[500];
@@ -84,12 +84,15 @@ function create(options) {
 
     // Insert our format and log
     args.unshift(format);
-    logger.apply(null, args);
+    logger.error.apply(null, args);
 
     // Send back our response!
     res.statusCode = status;
     return next(response);
   }
+
+  handler.log = logger;
+  return handler;
 }
 
 var handler = create();
@@ -98,3 +101,4 @@ exports = module.exports = function(err, req, res, next) {
   if (arguments.length == 4) return handler(err, req, res, next);
   return create(err);
 }
+exports.log = handler.log;
