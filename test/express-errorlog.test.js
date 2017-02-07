@@ -16,14 +16,11 @@ express.get('/test-9', function(req, res, next) {
   var error = Error('exception message for test-9');
   error.status = 410;
   error.details = { testname: 'test-9' };
-  error.extra = "this only gets logged!";
   throw error;
 });
 
 express.get('/test-0', function(req, res, next) {
   var error = Error('exception message for test-0');
-  error.more1 = 'some more in test 0'
-  error.more2 = 'even more in test 0'
   next({
     status: 411,
     message: 'message for test-0',
@@ -33,9 +30,10 @@ express.get('/test-0', function(req, res, next) {
 });
 
 var logmessage = null;
-express.use(errorlog({ logger: function(message) {
+var logwrapper = errorlog({ logger: function(message) {
   logmessage = message;
-}}));
+}});
+express.use(logwrapper);
 
 express.use(function(err, req, res, next) {
   return res.json(err);
@@ -47,7 +45,7 @@ describe('Express Error Handler', function() {
   var url = null;
 
   before(function(done) {
-    server = express.listen(-1, '127.0.0.1', function(error) {
+    server = express.listen(0, '127.0.0.1', function(error) {
       if (error) done(error);
       var address = server.address();
       url = 'http://' + address.address + ':' + address.port;
@@ -75,7 +73,7 @@ describe('Express Error Handler', function() {
           status: 400,
           message: 'Bad Request'
         });
-        expect(logmessage).to.equal('GET /test-1 (400) - Bad Request');
+        expect(logmessage).to.equal('ERROR - GET /test-1 (400) - Bad Request');
 
         return done();
       } catch (error) {
@@ -95,7 +93,7 @@ describe('Express Error Handler', function() {
           status: 499,
           message: 'Unknown status 499'
         });
-        expect(logmessage).to.equal('GET /test-2 (499) - Unknown status 499');
+        expect(logmessage).to.equal('ERROR - GET /test-2 (499) - Unknown status 499');
 
         return done();
       } catch (error) {
@@ -115,7 +113,7 @@ describe('Express Error Handler', function() {
           status: 500,
           message: 'Unknown status 999'
         });
-        expect(logmessage).to.equal('GET /test-3 (500) - Unknown status 999');
+        expect(logmessage).to.equal('ERROR - GET /test-3 (500) - Unknown status 999');
 
         return done();
       } catch (error) {
@@ -135,7 +133,7 @@ describe('Express Error Handler', function() {
           status: 401,
           message: 'message for test-4'
         });
-        expect(logmessage).to.equal('GET /test-4 (401) - message for test-4');
+        expect(logmessage).to.equal('ERROR - GET /test-4 (401) - message for test-4');
 
         return done();
       } catch (error) {
@@ -156,7 +154,7 @@ describe('Express Error Handler', function() {
           message: 'Payment Required',
           details: { testname: 'test-5' }
         });
-        expect(logmessage).to.equal('GET /test-5 (402) - Payment Required\n  >>> {"testname":"test-5"}');
+        expect(logmessage).to.equal('ERROR - GET /test-5 (402) - Payment Required\n  >>> {"testname":"test-5"}');
 
         return done();
       } catch (error) {
@@ -177,7 +175,7 @@ describe('Express Error Handler', function() {
           message: 'message for test-6',
           details: { testname: 'test-6' }
         });
-        expect(logmessage).to.equal('GET /test-6 (403) - message for test-6\n  >>> {"testname":"test-6"}');
+        expect(logmessage).to.equal('ERROR - GET /test-6 (403) - message for test-6\n  >>> {"testname":"test-6"}');
 
         return done();
       } catch (error) {
@@ -198,7 +196,7 @@ describe('Express Error Handler', function() {
           message: 'message for test-7',
           details: { testname: 'test-7' }
         });
-       expect(logmessage).to.equal('GET /test-7 (500) - message for test-7\n  >>> {"testname":"test-7"}');
+       expect(logmessage).to.equal('ERROR - GET /test-7 (500) - message for test-7\n  >>> {"testname":"test-7"}');
 
         return done();
       } catch (error) {
@@ -219,8 +217,8 @@ describe('Express Error Handler', function() {
           message: 'exception message for test-8',
         });
         expect(logmessage).to.match(new RegExp(
-          '^GET /test-8 \\(500\\) - exception message for test-8' + '\n' +
-          '  Error: exception message for test-8'                 + '\n' +
+          '^ERROR - GET /test-8 \\(500\\) - exception message for test-8' + '\n' +
+          '  Error: exception message for test-8'                         + '\n' +
           '    at '));
 
         return done();
@@ -243,10 +241,9 @@ describe('Express Error Handler', function() {
           details: { testname: 'test-9' }
         });
         expect(logmessage).to.match(new RegExp(
-          '^GET /test-9 \\(410\\) - exception message for test-9' + '\n' +
-          '  >>> {"testname":"test-9"}'                           + '\n' +
-          '  >>> {"extra":"this only gets logged!"}'              + '\n' +
-          '  Error: exception message for test-9'                 + '\n' +
+          '^ERROR - GET /test-9 \\(410\\) - exception message for test-9' + '\n' +
+          '  >>> {"testname":"test-9"}'                                   + '\n' +
+          '  Error: exception message for test-9'                         + '\n' +
           '    at '));
 
         return done();
@@ -269,10 +266,9 @@ describe('Express Error Handler', function() {
           details: { testname: 'test-0' }
         });
         expect(logmessage).to.match(new RegExp(
-          '^GET /test-0 \\(411\\) - message for test-0'                         + '\n' +
-          '  >>> {"testname":"test-0"}'                                         + '\n' +
-          '  >>> {"more1":"some more in test 0","more2":"even more in test 0"}' + '\n' +
-          '  Error: exception message for test-0'                               + '\n' +
+          '^ERROR - GET /test-0 \\(411\\) - message for test-0'                         + '\n' +
+          '  >>> {"testname":"test-0"}'                                                 + '\n' +
+          '  Error: exception message for test-0'                                       + '\n' +
           '    at '));
 
         return done();
@@ -280,5 +276,14 @@ describe('Express Error Handler', function() {
         return done(error);
       }
     });
+  });
+
+  it('should work expose the wrapped logger', function() {
+    logwrapper.log.info('This is a test');
+    expect(logmessage).to.equal(' INFO - This is a test');
+    logwrapper.log.warn('This is a test');
+    expect(logmessage).to.equal(' WARN - This is a test');
+    logwrapper.log.error('This is a test');
+    expect(logmessage).to.equal('ERROR - This is a test');
   });
 })
